@@ -27,7 +27,7 @@ app = FastAPI(title="AI Coach Core (FastAPI + MediaPipe + CNN-LSTM)")
 
 # 모델/라벨
 cnn_lstm_model = None
-LABELS_PATH = "model/labels.txt"
+LABELS_PATH = "../../models/exercise_models/labels.txt"
 CLASSES: List[str] = []
 
 # 학습 시 사용한 설정과 동일하게 맞추세요
@@ -342,7 +342,7 @@ def on_startup():
 
     # 모델 로드 (커스텀 레이어 등록)
     cnn_lstm_model = load_model(
-        "model/cnn_lstm_exercise_model.keras",
+        "../../models/exercise_models/cnn_lstm_model.h5", 
         custom_objects={"TemporalAttention": TemporalAttention}
     )
     # MediaPipe Pose 전역 생성 (재사용)
@@ -374,15 +374,28 @@ def health():
 @app.post("/analyze", response_model=AnalyzeResponse)
 def analyze_json(payload: AnalyzeRequest):
     try:
-        msg = (payload.message or "").strip()
-
+        msg = (payload.message or "").strip()\
+            
+        # ✅ result 기본값 (null용)
+        result = {
+            "detected_exercise": None,
+            "exercise_confidence": None,
+            "probs": None,
+            "total_frames": None,
+            "frames": None,
+            "stage": None,
+            "pose_detected": None,
+            "pose_data": None,
+            "message": msg or None
+        }
+        
         # 1) 이미지(base64)
         if payload.image:
             image_bytes = base64.b64decode(payload.image)
             result = analyze_frame(image_bytes)
             if msg:
                 result["message"] = msg
-            # print(result)
+            print(result)
             return AnalyzeResponse(**result)
 
         # 2) 동영상(base64)
@@ -391,13 +404,13 @@ def analyze_json(payload: AnalyzeRequest):
             result = analyze_video(video_bytes)  # 프레임별 pose/단계/프레임별 예측 포함
             if msg:
                 result["message"] = msg
-            # print(result)
+            print(result)
             return AnalyzeResponse(**result)
 
         # 3) 텍스트만
         if msg:
-            # print(result)
-            return AnalyzeResponse(message=msg)
+            print(result)
+            return AnalyzeResponse(**result)
 
         raise HTTPException(status_code=400, detail="image, video, message 중 하나는 필수입니다.")
     except HTTPException:
