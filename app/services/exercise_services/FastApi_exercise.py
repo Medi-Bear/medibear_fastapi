@@ -467,6 +467,36 @@ def compute_rep_metrics(frames_slice: List[Dict[str, Any]], fps: float) -> Dict[
         "duration_s": (len(frames_slice)/fps if fps else None),
     }
 
+def filter_reps(reps, fps):
+    ROM_MIN_DEG = 40.0   # 가동 범위 기준(필요시 45~55로 조정)
+    MIN_GAP_SEC = 0.8    # rep 간 최소 간격(초)
+    min_gap = int(MIN_GAP_SEC * fps)
+
+    def ok_tempo(t):
+        return (t is not None) and (0.25 <= t <= 2.0)
+
+    filtered = []
+    last_end = -10**9
+
+    for r in reps:
+        rom  = r.get("primary_rom_deg") or 0.0
+        tempo = r.get("tempo_s") or {}
+        down = tempo.get("down")
+        up   = tempo.get("up")
+        endf = (r.get("frames") or {}).get("end", 0)
+
+        if rom < ROM_MIN_DEG:
+            continue
+        if not (ok_tempo(down) and ok_tempo(up)):
+            continue
+        if endf - last_end < min_gap:
+            continue
+
+        last_end = endf
+        filtered.append(r)
+
+    return filtered
+
 FRAME_STRIDE = 2  # 필요 시 조정
 
 def analyze_video(video_bytes: bytes) -> Dict[str, Any]:
@@ -619,7 +649,7 @@ def on_startup():
 
     # 모델 로드 (커스텀 레이어 등록)
     cnn_lstm_model = load_model(
-        "../../models/exercise_models/cnn_lstm_model.h5",
+        "../../models/exercise_models/cnn_lstm_model_stronger.h5",
         custom_objects={"TemporalAttention": TemporalAttention}
     )
 
@@ -665,6 +695,12 @@ def analyze_json(payload: AnalyzeRequest):
         if payload.video:
             video_bytes = base64.b64decode(payload.video)
             out = analyze_video(video_bytes)
+            # ✅ reps 필터링 추가 (이 부분만 새로 삽입)
+            if "reps" in out and "fps" in out:
+                out["reps"] = filter_reps(out["reps"], out["fps"])
+                if "global_stats" in out:
+                    out["global_stats"]["rep_count"] = len(out["reps"])
+            
             if msg:
                 out["message"] = msg
             print("[/analyze][video_summary]", out)
