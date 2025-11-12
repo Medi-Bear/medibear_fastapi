@@ -2,6 +2,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers.calorie import calorie_router
 from app.routers.ophtha import ophtha_router
+from pydantic import BaseModel
+from app.routers import predict
+from app.routers.sleep_router import sleep_api, sleepchat_api
 import uvicorn
 
 app = FastAPI()
@@ -18,6 +21,10 @@ app.add_middleware(
 # app.include_router(predict.router, prefix="/predict", tags=["prediction"])
 app.include_router(calorie_router.router, prefix="/calorie", tags=["calorie_prediction"])
 app.include_router(ophtha_router.router, prefix="/ophtha", tags=["ophtha"])
+app.include_router(predict.router, prefix="/predict", tags=["prediction"])
+app.include_router(sleep_api.router)
+app.include_router(sleepchat_api.router)
+
 # reload=True : 코드 변경 시 서버 자동 재시작
 if __name__ == "__main__":
     uvicorn.run(app="main:app", host="0.0.0.0", port=8000, reload=True)  
