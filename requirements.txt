@@ -1,2 +1,14 @@
 fastapi==0.120.4
 uvicorn==0.38.0
+joblib # 모델 사용
+pandas
+python-dotenv # 환경변수 사용 
+Pillow # 이미지 처리
+transformers # 텍스트 분석
+accelerate # 허깅페이스 
+langchain
+langgraph
+langsmith
+safetensors 
+sentencepiece 
+huggingface-hub
