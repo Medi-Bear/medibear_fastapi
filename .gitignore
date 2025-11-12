@@ -176,4 +176,4 @@ pyrightconfig.json
 # End of https://www.toptal.com/developers/gitignore/api/python
 
 # Ignore large model files
-app/models/calorie/calorie_model.pkl.env
+app/models/calorie/calorie_model.pkl
