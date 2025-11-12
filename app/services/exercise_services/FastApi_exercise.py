@@ -9,6 +9,7 @@ import os, io, math, base64
 import numpy as np
 import cv2
 import av
+import requests
 
 # MediaPipe
 import mediapipe as mp
@@ -682,44 +683,100 @@ def analyze_json(payload: AnalyzeRequest):
     try:
         msg = (payload.message or "").strip()
 
-        # 1) 이미지(base64) → 프레임 기반 분석 반환
+        # 1) 이미지(base64)
         if payload.image:
             image_bytes = base64.b64decode(payload.image)
-            out = analyze_frame(image_bytes)
-            if msg:
-                out["message"] = msg
-            print("[/analyze][image]", out)
-            return AnalyzeResponse(**out)
+            analysis_out = analyze_frame(image_bytes)
 
-        # 2) 동영상(base64) → 요약 JSON 그대로 반환
-        if payload.video:
+        # 2) 비디오(base64)
+        elif payload.video:
             video_bytes = base64.b64decode(payload.video)
-            out = analyze_video(video_bytes)
-            # ✅ reps 필터링 추가 (이 부분만 새로 삽입)
-            if "reps" in out and "fps" in out:
-                out["reps"] = filter_reps(out["reps"], out["fps"])
-                if "global_stats" in out:
-                    out["global_stats"]["rep_count"] = len(out["reps"])
-            
-            if msg:
-                out["message"] = msg
-            print("[/analyze][video_summary]", out)
-            return out  # 요약 스키마 그대로 반환
+            analysis_out = analyze_video(video_bytes)
+            if "reps" in analysis_out and "fps" in analysis_out:
+                analysis_out["reps"] = filter_reps(analysis_out["reps"], analysis_out["fps"])
+                if "global_stats" in analysis_out:
+                    analysis_out["global_stats"]["rep_count"] = len(analysis_out["reps"])
 
         # 3) 텍스트만
-        if msg:
-            print("[/analyze][text]", {"message": msg})
-            return AnalyzeResponse(**{
+        elif msg:
+            analysis_out = {
                 "detected_exercise": None, "exercise_confidence": None, "probs": None,
                 "total_frames": None, "frames": None,
                 "stage": None, "pose_detected": None, "pose_data": None,
                 "message": msg
-            })
+            }
 
-        raise HTTPException(status_code=400, detail="image, video, message 중 하나는 필수입니다.")
+        else:
+            raise HTTPException(status_code=400, detail="image, video, message 중 하나 필요")
 
-    except HTTPException:
-        raise
+        # ✅ LLM 서버로 전달할 JSON
+        send_data = {
+            "user_id": payload.userId,
+            "message": msg if msg else "",
+            "analysis": analysis_out
+        }
+
+        # ✅ LLM 서버 요청
+        res = requests.post("http://localhost:8000/chat_with_analysis", json=send_data)
+        if res.status_code != 200:
+            raise HTTPException(status_code=500, detail="LLM 서버 응답 실패")
+
+        llm_answer = res.json().get("answer", "")
+
+        # ✅ 최종 응답 (LLM 코칭 결과만 보내기)
+        return {"answer": llm_answer, "analysis": analysis_out}
+
     except Exception as e:
-        import traceback; traceback.print_exc()
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Internal error: {type(e).__name__}")
+
+
+
+######################################################################합치기전에 필요했던 부분###
+# @app.post("/analyze")
+# def analyze_json(payload: AnalyzeRequest):
+#     try:
+#         msg = (payload.message or "").strip()
+
+#         # 1) 이미지(base64) → 프레임 기반 분석 반환
+#         if payload.image:
+#             image_bytes = base64.b64decode(payload.image)
+#             out = analyze_frame(image_bytes)
+#             if msg:
+#                 out["message"] = msg
+#             print("[/analyze][image]", out)
+#             return AnalyzeResponse(**out)
+
+#         # 2) 동영상(base64) → 요약 JSON 그대로 반환
+#         if payload.video:
+#             video_bytes = base64.b64decode(payload.video)
+#             out = analyze_video(video_bytes)
+#             # ✅ reps 필터링 추가 (이 부분만 새로 삽입)
+#             if "reps" in out and "fps" in out:
+#                 out["reps"] = filter_reps(out["reps"], out["fps"])
+#                 if "global_stats" in out:
+#                     out["global_stats"]["rep_count"] = len(out["reps"])
+            
+#             if msg:
+#                 out["message"] = msg
+#             print("[/analyze][video_summary]", out)
+#             return out  # 요약 스키마 그대로 반환
+
+#         # 3) 텍스트만
+#         if msg:
+#             print("[/analyze][text]", {"message": msg})
+#             return AnalyzeResponse(**{
+#                 "detected_exercise": None, "exercise_confidence": None, "probs": None,
+#                 "total_frames": None, "frames": None,
+#                 "stage": None, "pose_detected": None, "pose_data": None,
+#                 "message": msg
+#             })
+
+#         raise HTTPException(status_code=400, detail="image, video, message 중 하나는 필수입니다.")
+
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         import traceback; traceback.print_exc()
+#         raise HTTPException(status_code=500, detail=f"Internal error: {type(e).__name__}")
