@@ -384,31 +384,5 @@ def main():
         for c in class_names:
             f.write(c + "\n")
 
-    # --------------------------
-    # 테스트 평가 (분류 리포트, 혼동 행렬)
-    # --------------------------
-    # print("\n[TEST] Evaluating on test set ...")
-    # test_loss, test_acc = model.evaluate(test_gen, verbose=1)
-    # print(f"[TEST] loss={test_loss:.4f}, acc={test_acc:.4f}")
-
-    # y_prob = model.predict(test_gen, verbose=1)
-    # y_pred = np.argmax(y_prob, axis=1)
-    # ys = []
-    # for i in range(len(test_gen)):
-    #     _, yb = test_gen[i]
-    #     ys.append(yb)
-    # y_true = np.concatenate(ys, axis=0)[:len(y_pred)]
-
-    # report = classification_report(y_true, y_pred, target_names=class_names, digits=4)
-    # cm = confusion_matrix(y_true, y_pred)
-
-    # print("\n[TEST] Classification Report\n", report)
-    # print("[TEST] Confusion Matrix\n", cm)
-
-    # with open("test_report_stronger.txt", "w", encoding="utf-8") as f:
-    #     f.write(report)
-    # np.savetxt("test_confusion_matrix_stronger.txt", cm, fmt="%d")
-    # print("📄 Saved: test_report_stronger.txt, test_confusion_matrix_stronger.txt")
-
 if __name__ == "__main__":
     main()

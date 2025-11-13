@@ -9,8 +9,8 @@ from sklearn.metrics import classification_report, confusion_matrix
 # ------------------------------
 # 설정
 # ------------------------------
-DATASET_ROOT = "./dataset"
-MODEL_PATH   = "best_cnn_lstm_model.h5"   # or "cnn_lstm_model.h5"
+DATASET_ROOT = "../dataset"
+MODEL_PATH   = "../best_cnn_lstm_model.h5"   # or "best_cnn_lstm_model_stronger.h5"
 LABEL_PATH   = "../labels.txt"
 
 IMG_SIZE     = (160, 160)

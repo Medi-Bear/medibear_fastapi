@@ -331,6 +331,19 @@ def main():
         verbose=1
     )
 
+    print("\n[INFO] Saving merged history (Stage1 + Stage2) ...")
+
+    full_history = {}
+    for key in history1.history.keys():
+        full_history[key] = history1.history[key] + history2.history.get(key, [])
+
+    # 파일명 원하는 걸로 바꾸면 됨.
+    with open("history.json", "w", encoding="utf-8") as f:
+        import json
+        json.dump(full_history, f, indent=2)
+
+    print("📈 Saved: history.json (training curves)")
+
     # --------------------------
     # 최종 모델 저장 (현재 경로)
     # --------------------------
