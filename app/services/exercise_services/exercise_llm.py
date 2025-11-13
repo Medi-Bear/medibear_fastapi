@@ -25,7 +25,8 @@ MODEL_PATH = "../../models/exercise_models/qwen2.5-3b-instruct-q4_k_m.gguf"   # 
 
 llm = Llama(
     model_path=MODEL_PATH,
-    n_ctx=2048,
+    # 이전 : 2048
+    n_ctx=4096,
     n_threads=max(1, (os.cpu_count() or 2) - 1),
     n_batch=128,
     logits_all=False,
@@ -133,7 +134,8 @@ async def llm_generate(messages):
             temperature=0.2,
             top_p=0.9,
             repeat_penalty=1.12,
-            max_tokens=600,
+            # 이전 : 600
+            max_tokens=256, 
         )
         return out["choices"][0]["message"]["content"].strip()
     return await asyncio.to_thread(_run)
