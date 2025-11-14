@@ -12,11 +12,20 @@ from app.services.sleep_services.user_service import (
     get_member_no_by_email,
 )
 
-import google.generativeai as genai
+from groq import Groq
 from config.sleep_config import settings
 
-genai.configure(api_key=settings.GOOGLE_API_KEY)
-model = genai.GenerativeModel("gemini-2.5-flash")
+clinet = Groq(api_key=settings.GROQ_API_KEY)
+
+DEFAULT_MODEL = "llama-3.1-8b-instant"
+
+def call_llm(prompt: str, model_name: str = DEFAULT_MODEL):
+    response = clinet.chat.completions.create(
+        model=model_name,
+        messages=[{"role": "user", "content":prompt}],
+        temperature=0.7
+    )
+    return response.choices[0].message.content
 
 
 class SleepState(BaseModel):
@@ -56,8 +65,7 @@ def general_chat_node(state: SleepState):
     {message}
     """
 
-    result = model.generate_content(prompt)
-    response = result.text.strip()
+    response = call_llm(prompt)
 
     return {"response": response, "messages": [AIMessage(content=response)]}
 
@@ -89,9 +97,7 @@ def daily_report_node(state: SleepState):
 
     핵심 일간 리포트를 작성해주세요.
     """
-
-    result = model.generate_content(prompt)
-    response = result.text.strip()
+    response = call_llm(prompt)
 
     return {"response": response, "messages": [AIMessage(content=response)]}
 
@@ -126,9 +132,7 @@ def weekly_report_node(state: SleepState):
 
     주간 리포트를 작성해주세요.
     """
-
-    result = model.generate_content(prompt)
-    response = result.text.strip()
+    response = call_llm(prompt)
 
     return {"response": response, "messages": [AIMessage(content=response)]}
 
