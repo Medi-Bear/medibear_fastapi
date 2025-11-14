@@ -25,6 +25,9 @@ app.include_router(ophtha_router.router, prefix="/ophtha", tags=["ophtha"])
 app.include_router(sleep_api.router)
 app.include_router(sleepchat_api.router)
 
+# 운동 라우터 
+app.include_router()
+
 # reload=True : 코드 변경 시 서버 자동 재시작
 if __name__ == "__main__":
     uvicorn.run(app="main:app", host="0.0.0.0", port=8000, reload=True)  
