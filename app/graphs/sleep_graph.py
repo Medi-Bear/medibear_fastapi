@@ -12,7 +12,7 @@ from app.services.sleep_services.user_service import (
     get_member_no_by_email,
 )
 
-import groq as Groq
+from groq import Groq
 from config.sleep_config import settings
 
 clinet = Groq(api_key=settings.GROQ_API_KEY)
