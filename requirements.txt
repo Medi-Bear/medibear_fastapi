@@ -2,11 +2,13 @@
 fastapi==0.120.4
 uvicorn==0.38.0
 
-transformers # 텍스트 분석
-accelerate # 허깅페이스 
-safetensors 
-sentencepiece 
-huggingface-hub
+# -- huggingface
+huggingface-hub==0.36.0
+transformers==4.57.1 # 텍스트 분석
+
+accelerate==1.11.0 # 허깅페이스 
+sentencepiece==0.2.1
+safetensors==0.6.2
 
 python-dotenv==1.2.1
 requests==2.32.3
@@ -38,7 +40,7 @@ grpcio==1.76.0
 grpcio-status==1.71.2
 
 # --- Machine Learning / Deep Learning ---
-tensorflow==2.20.0
+# tensorflow==2.20.0
 keras==3.12.0
 jax==0.6.2
 jaxlib==0.6.2
