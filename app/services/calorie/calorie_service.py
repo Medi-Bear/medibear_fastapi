@@ -55,12 +55,12 @@ def predict_calories(duration_minutes: float, weight_kg: float, activity_type: s
 # 🔥 Groq LLM 분석 함수
 # -----------------------------
 def llm_anaylze_calorie(logs):
-    # compact log 포맷팅
+    # compact log formatting
     log_text = "\n".join(
         f"{l.activityType}/{int(l.caloriesBurned/8)}분/{l.caloriesBurned}kcal/{l.weightKg}kg"
         for l in logs
     )
-    
+
     prompt = f"""
     데이터:
     {log_text}
@@ -69,19 +69,29 @@ def llm_anaylze_calorie(logs):
     1) 운동 패턴 요약 
     2) 칼로리 소모 추세 
     3) 15일 후, 30일 후 몸무게 예측
-    을 한국어로 작성하고 깔끔하게 정리해주세요.
+    한국어로 자세히 작성.
+
+    그리고 마지막에 다음 형식으로 "요약:"을 포함해 1줄로 요약해주세요:
+    요약: ~~~
     """
 
-    # ⭐ Groq 모델 호출 (async)
     response = groq_client.chat.completions.create(
         messages=[{"role": "user", "content": prompt}],
-        model="openai/gpt-oss-120b",   # 빠르고 품질 좋음
+        model="openai/gpt-oss-120b",
         temperature=0.3
     )
 
     advice = response.choices[0].message.content.strip()
 
+    # "요약:" 부분만 파싱
+    summary = None
+    if "요약:" in advice:
+        summary = advice.split("요약:")[-1].strip()
+    else:
+        summary = advice[:200]  # fallback
+
     return {
         "prompt": prompt,
-        "advice": advice
+        "advice": advice,
+        "summary": summary
     }
